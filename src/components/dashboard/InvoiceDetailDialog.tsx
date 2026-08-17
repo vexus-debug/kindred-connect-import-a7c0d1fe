@@ -30,6 +30,9 @@ function getInvoiceHTML(invoice: InvoiceWithPatient, lineItems: any[], payments:
   const clinicPhone = clinic?.phone || "";
   const clinicAddress = clinic?.address || "";
   const clinicEmail = clinic?.email || "";
+  const clinicLogo = clinic?.logo_url || "";
+  const brand = clinic?.settings?.primary_color || "#0891b2";
+  const brandAccent = clinic?.settings?.accent_color || brand;
 
   const rows = lineItems.map(item =>
     `<tr>
@@ -55,21 +58,23 @@ function getInvoiceHTML(invoice: InvoiceWithPatient, lineItems: any[], payments:
       *{margin:0;padding:0;box-sizing:border-box}
       body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1f2937;background:#fff;padding:0;margin:0}
       .invoice-container{max-width:800px;margin:0 auto;padding:40px}
-      .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:3px solid #0891b2}
-      .clinic-info h1{font-size:24px;color:#0891b2;margin-bottom:4px;font-weight:700}
+      .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:24px;border-bottom:3px solid ${brand}}
+      .brand-row{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+      .brand-row img{height:48px;width:auto;max-width:180px;object-fit:contain}
+      .clinic-info h1{font-size:24px;color:${brand};margin-bottom:4px;font-weight:700}
       .clinic-info p{font-size:12px;color:#6b7280;line-height:1.6}
       .invoice-meta{text-align:right}
       .invoice-meta h2{font-size:28px;color:#1f2937;font-weight:800;letter-spacing:-0.5px}
-      .invoice-meta .inv-number{font-family:'Courier New',monospace;font-size:14px;color:#0891b2;font-weight:600;margin-top:4px}
+      .invoice-meta .inv-number{font-family:'Courier New',monospace;font-size:14px;color:${brandAccent};font-weight:600;margin-top:4px}
       .invoice-meta .inv-date{font-size:12px;color:#6b7280;margin-top:2px}
       .patient-section{background:#f9fafb;border-radius:8px;padding:16px 20px;margin-bottom:24px}
       .patient-section h3{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin-bottom:6px;font-weight:600}
       .patient-section p{font-size:14px;font-weight:600;color:#1f2937}
       table{width:100%;border-collapse:collapse;margin:16px 0}
-      thead th{text-align:left;padding:10px 14px;border-bottom:2px solid #1f2937;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;font-weight:600}
+      thead th{text-align:left;padding:10px 14px;border-bottom:2px solid ${brand};font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;font-weight:600}
       .totals{margin-top:16px;margin-left:auto;width:280px}
       .totals .row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#4b5563}
-      .totals .row.total{border-top:2px solid #1f2937;padding-top:10px;margin-top:6px;font-size:18px;font-weight:700;color:#1f2937}
+      .totals .row.total{border-top:2px solid ${brand};padding-top:10px;margin-top:6px;font-size:18px;font-weight:700;color:#1f2937}
       .totals .row.balance{font-size:16px;font-weight:700}
       .status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
       .status-paid{background:#dcfce7;color:#16a34a}
@@ -77,14 +82,17 @@ function getInvoiceHTML(invoice: InvoiceWithPatient, lineItems: any[], payments:
       .status-partial{background:#fef3c7;color:#d97706}
       .payment-section{margin-top:24px;padding-top:20px;border-top:1px solid #e5e7eb}
       .payment-section h3{font-size:14px;font-weight:600;margin-bottom:12px}
-      .footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;text-align:center;font-size:11px;color:#9ca3af}
+      .footer{margin-top:40px;padding-top:20px;border-top:2px solid ${brand};text-align:center;font-size:11px;color:#9ca3af}
       .footer p{margin-bottom:2px}
-      @media print{body{padding:0}.invoice-container{padding:20px}button,.no-print{display:none!important}}
+      @media print{body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.invoice-container{padding:20px}button,.no-print{display:none!important}}
     </style></head><body>
     <div class="invoice-container">
       <div class="header">
         <div class="clinic-info">
-          <h1>${clinicName}</h1>
+          <div class="brand-row">
+            ${clinicLogo ? `<img src="${clinicLogo}" alt="${clinicName} logo" />` : ""}
+            <h1>${clinicName}</h1>
+          </div>
           ${clinicAddress ? `<p>📍 ${clinicAddress}</p>` : ""}
           ${clinicPhone ? `<p>📞 ${clinicPhone}</p>` : ""}
           ${clinicEmail ? `<p>✉️ ${clinicEmail}</p>` : ""}
