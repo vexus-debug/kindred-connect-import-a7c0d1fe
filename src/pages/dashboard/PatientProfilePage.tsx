@@ -1,3 +1,4 @@
+import { PatientImageThumb } from "@/components/dashboard/PatientImageThumb";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -499,7 +500,7 @@ export default function PatientProfilePage() {
                 {images.map((img: any) => (
                   <Card key={img.id} className="overflow-hidden">
                     <div className="aspect-square bg-muted">
-                      <img src={img.image_url} alt={img.description || "Patient image"} className="w-full h-full object-cover" />
+                      <PatientImageThumb path={img.image_url} alt={img.description} />
                     </div>
                     <CardContent className="p-2">
                       <Badge variant="outline" className="text-[10px] capitalize">{img.image_type}</Badge>
