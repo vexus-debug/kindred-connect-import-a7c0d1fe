@@ -4,13 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, FileText, Search, CheckCircle, Clock, AlertCircle, Upload } from "lucide-react";
+import { Plus, FileText, Search, CheckCircle, Clock, AlertCircle, Upload, Library, ScanLine, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { useAllConsentForms, useConsentFormTemplates, useCreateConsentFormTemplate, useCreatePatientConsentForm, useSignConsentForm } from "@/hooks/useConsentForms";
 import { usePatients } from "@/hooks/usePatients";
 import { useUploadPatientDocument } from "@/hooks/useDocuments";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrg } from "@/hooks/useOrg";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { consentTemplateSeeds } from "@/data/consentTemplates";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +60,85 @@ export default function ConsentFormsPage() {
 
   const [templateForm, setTemplateForm] = useState({ title: "", content: "", category: "general" });
   const [consentForm, setConsentForm] = useState({ patientId: "", templateId: "", title: "", content: "" });
+
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importKeys, setImportKeys] = useState<string[]>(consentTemplateSeeds.map(t => t.key));
+  const [importing, setImporting] = useState(false);
+  const [scanning, setScanning] = useState(false);
+
+  const existingTitles = new Set(templates.map((t: any) => (t.title || "").toLowerCase()));
+
+  const toggleImportKey = (key: string) => {
+    setImportKeys(prev => (prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]));
+  };
+
+  const handleImportTemplates = async () => {
+    const chosen = consentTemplateSeeds.filter(
+      t => importKeys.includes(t.key) && !existingTitles.has(t.title.toLowerCase()),
+    );
+    if (chosen.length === 0) {
+      toast({ title: "Nothing to import", description: "The selected templates already exist." });
+      return;
+    }
+    setImporting(true);
+    try {
+      for (const t of chosen) {
+        await createTemplate.mutateAsync({
+          title: t.title,
+          content: t.content,
+          category: t.category,
+          created_by: user?.id,
+        });
+      }
+      toast({ title: `${chosen.length} template${chosen.length === 1 ? "" : "s"} imported` });
+      setImportDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const fileToBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = () => reject(new Error("Could not read the file."));
+      reader.readAsDataURL(file);
+    });
+
+  const handleScanToTemplate = async () => {
+    if (!uploadFile) return;
+    if (!uploadFile.type.startsWith("image/")) {
+      toast({ title: "Image required", description: "Scanning works on a photo or image scan of the form.", variant: "destructive" });
+      return;
+    }
+    setScanning(true);
+    try {
+      const imageBase64 = await fileToBase64(uploadFile);
+      const { data, error } = await supabase.functions.invoke("scan-consent-template", {
+        body: { imageBase64, mimeType: uploadFile.type },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const scanned = data as { title: string; category: string; content: string };
+      await createTemplate.mutateAsync({
+        title: uploadTitle || scanned.title,
+        content: scanned.content,
+        category: scanned.category || "general",
+        created_by: user?.id,
+      });
+      toast({ title: "Template created from scan", description: "Review the extracted text in the Templates tab." });
+      setUploadDialogOpen(false);
+      setUploadFile(null);
+      setUploadTitle("");
+      setUploadPatientId("");
+    } catch (err: any) {
+      toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const handleCreateTemplate = () => {
     createTemplate.mutate({ ...templateForm, created_by: user?.id }, {
@@ -124,6 +208,11 @@ export default function ConsentFormsPage() {
               <Plus className="mr-2 h-4 w-4" /> New Template
             </Button>
           )}
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+              <Library className="mr-2 h-4 w-4" /> Import Templates
+            </Button>
+          )}
           <Button size="sm" onClick={() => setFormDialogOpen(true)} className="bg-secondary hover:bg-secondary/90">
             <Plus className="mr-2 h-4 w-4" /> Create Consent
           </Button>
@@ -183,7 +272,16 @@ export default function ConsentFormsPage() {
 
         <TabsContent value="templates" className="mt-4 space-y-3">
           {templates.length === 0 ? (
-            <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">No templates yet.</CardContent></Card>
+            <Card>
+              <CardContent className="py-10 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">No templates yet.</p>
+                {isAdmin && (
+                  <Button size="sm" variant="outline" onClick={() => setImportDialogOpen(true)}>
+                    <Library className="mr-2 h-4 w-4" /> Import the standard dental library
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ) : templates.map((t: any) => (
             <Card key={t.id} className="glass-card">
               <CardContent className="py-4">
@@ -292,12 +390,63 @@ export default function ConsentFormsPage() {
             <div className="space-y-1">
               <Label className="text-xs">Scanned Document / Photo *</Label>
               <Input type="file" accept="image/*,.pdf,.doc,.docx" onChange={e => setUploadFile(e.target.files?.[0] || null)} />
+              <p className="text-[11px] text-muted-foreground">
+                For an image, you can also extract the text into a reusable template with "Scan to Template".
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>Cancel</Button>
+            {isAdmin && (
+              <Button variant="outline" onClick={handleScanToTemplate} disabled={scanning || !uploadFile}>
+                {scanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanLine className="mr-2 h-4 w-4" />}
+                {scanning ? "Scanning..." : "Scan to Template"}
+              </Button>
+            )}
             <Button onClick={handleUploadScanned} className="bg-secondary hover:bg-secondary/90" disabled={uploadDoc.isPending || !uploadFile || !uploadPatientId || !uploadTitle}>
               {uploadDoc.isPending ? "Uploading..." : "Upload"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Template Library Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Import Consent Templates</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Standard dental consent forms with placeholders you can edit after importing. Templates you already have are skipped.
+          </p>
+          <ScrollArea className="max-h-[50vh] pr-3">
+            <div className="space-y-2">
+              {consentTemplateSeeds.map(t => {
+                const exists = existingTitles.has(t.title.toLowerCase());
+                return (
+                  <label
+                    key={t.key}
+                    className={`flex items-start gap-3 rounded-lg border p-3 ${exists ? "opacity-60" : "cursor-pointer hover:bg-muted/50"}`}
+                  >
+                    <Checkbox
+                      checked={!exists && importKeys.includes(t.key)}
+                      disabled={exists}
+                      onCheckedChange={() => toggleImportKey(t.key)}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{t.title}</p>
+                      <p className="text-xs text-muted-foreground">{t.description}</p>
+                      <Badge variant="outline" className="text-[10px] capitalize mt-1">
+                        {exists ? "already added" : t.category}
+                      </Badge>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleImportTemplates} className="bg-secondary hover:bg-secondary/90" disabled={importing}>
+              {importing ? "Importing..." : "Import selected"}
             </Button>
           </DialogFooter>
         </DialogContent>
