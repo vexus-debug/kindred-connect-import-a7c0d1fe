@@ -12,7 +12,8 @@ import {
   Loader2, Users, Award, ShoppingBag, Stethoscope,
 } from "lucide-react";
 import { motion, useInView } from "framer-motion";
-import { getTemplate, type SectionKey, type WebsiteTemplate } from "@/config/websiteTemplates";
+import { getTemplate, type WebsiteTemplate } from "@/config/websiteTemplates";
+import type { SiteSettings as ClinicSiteSettings } from "@/hooks/useClinicSettings";
 
 interface GalleryItem {
   id: string;
@@ -21,24 +22,7 @@ interface GalleryItem {
   description?: string;
 }
 
-interface SiteSettings {
-  welcome_text?: string;
-  primary_color?: string;
-  accent_color?: string;
-  short_description?: string;
-  hero_title?: string;
-  hero_subtitle?: string;
-  hero_image_url?: string;
-  whatsapp_number?: string;
-  operating_hours?: { day: string; open: string; close: string; closed?: boolean }[];
-  instagram_url?: string;
-  facebook_url?: string;
-  google_review_url?: string;
-  certifications?: { title: string; description?: string }[];
-  booking_confirmation_message?: string;
-  gallery_items?: GalleryItem[];
-  template?: string;
-}
+type SiteSettings = ClinicSiteSettings;
 
 interface ClinicInfo {
   id: string;
