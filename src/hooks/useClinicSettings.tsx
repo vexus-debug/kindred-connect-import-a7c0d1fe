@@ -22,6 +22,35 @@ export interface GalleryItem {
   description?: string;
 }
 
+export interface WhyChooseItem {
+  title: string;
+  description?: string;
+}
+
+export interface TestimonialItem {
+  name: string;
+  text: string;
+  rating?: number;
+  photo_url?: string;
+}
+
+export interface PricingItem {
+  name: string;
+  price: string;
+  note?: string;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface ServiceCard {
+  title: string;
+  description?: string;
+  icon?: string;
+}
+
 export interface SiteSettings {
   // Template
   template?: string;
@@ -33,6 +62,9 @@ export interface SiteSettings {
   hero_title?: string;
   hero_subtitle?: string;
   hero_image_url?: string;
+  hero_video_url?: string;
+  hero_cta_label?: string;
+  hero_cta_type?: "booking" | "whatsapp" | "call";
 
   // Colors
   primary_color?: string;
@@ -51,6 +83,53 @@ export interface SiteSettings {
 
   // Certifications
   certifications?: Certification[];
+
+  // Trust bar
+  trust_years?: string;
+  trust_patients?: string;
+  trust_rating?: string;
+  trust_extra_label?: string;
+  trust_extra_value?: string;
+  show_trust_bar?: boolean;
+
+  // Services overview
+  service_cards?: ServiceCard[];
+  services_title?: string;
+  services_subtitle?: string;
+
+  // Why choose us
+  why_title?: string;
+  why_items?: WhyChooseItem[];
+
+  // Meet the dentist
+  dentist_name?: string;
+  dentist_credentials?: string;
+  dentist_photo_url?: string;
+  dentist_bio?: string;
+
+  // Testimonials
+  testimonials?: TestimonialItem[];
+
+  // Pricing / what to expect
+  pricing_title?: string;
+  pricing_note?: string;
+  pricing_items?: PricingItem[];
+  what_to_expect?: string;
+
+  // FAQ
+  faqs?: FaqItem[];
+
+  // Location
+  map_embed_url?: string;
+  directions_url?: string;
+
+  // Final CTA
+  final_cta_title?: string;
+  final_cta_subtitle?: string;
+  final_cta_label?: string;
+
+  // Footer
+  footer_note?: string;
 
   // Booking
   booking_confirmation_message?: string;

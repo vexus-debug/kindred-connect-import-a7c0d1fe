@@ -10,12 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, ExternalLink, Upload, Image as ImageIcon,
   Globe, Palette, Clock, Share2, Shield, MessageSquare, Camera, LayoutTemplate,
+  BarChart3, Sparkle, UserRound, Quote, Receipt, HelpCircle, MapPin, Megaphone,
 } from "lucide-react";
 import { websiteTemplates, defaultTemplateId } from "@/config/websiteTemplates";
 
 import {
   useClinicSettings, useUpdateClinicSettings,
   type SiteSettings, type OperatingHour, type Certification, type GalleryItem,
+  type ServiceCard, type WhyChooseItem, type TestimonialItem, type PricingItem, type FaqItem,
 } from "@/hooks/useClinicSettings";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { motion } from "framer-motion";
@@ -50,6 +52,11 @@ export default function WebsiteSettingsPage() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [newGalleryTitle, setNewGalleryTitle] = useState("");
   const [newGalleryDesc, setNewGalleryDesc] = useState("");
+  const [serviceCards, setServiceCards] = useState<ServiceCard[]>([]);
+  const [whyItems, setWhyItems] = useState<WhyChooseItem[]>([]);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+  const [pricingItems, setPricingItems] = useState<PricingItem[]>([]);
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
 
   // Sync from server
   useEffect(() => {
@@ -57,6 +64,11 @@ export default function WebsiteSettingsPage() {
       setHours(settings.operating_hours || DEFAULT_HOURS);
       setCerts(settings.certifications || []);
       setGallery(settings.gallery_items || []);
+      setServiceCards(settings.service_cards || []);
+      setWhyItems(settings.why_items || []);
+      setTestimonials(settings.testimonials || []);
+      setPricingItems(settings.pricing_items || []);
+      setFaqs(settings.faqs || []);
     }
   }, [clinicSettings]);
 
@@ -76,6 +88,11 @@ export default function WebsiteSettingsPage() {
       operating_hours: hours,
       certifications: certs,
       gallery_items: gallery,
+      service_cards: serviceCards,
+      why_items: whyItems,
+      testimonials,
+      pricing_items: pricingItems,
+      faqs,
       ...extraFields,
     };
     updateClinic.mutate({ id: clinicSettings.id, settings: merged });
