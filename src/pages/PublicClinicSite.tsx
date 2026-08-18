@@ -928,7 +928,7 @@ export default function PublicClinicSite() {
       {renderHero()}
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-14">
-        {tpl.sections.map((key) => sectionMap[key])}
+        {orderedSections}
       </main>
 
       {/* ── Footer ── */}
