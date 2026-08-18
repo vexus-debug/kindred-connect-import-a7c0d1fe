@@ -222,9 +222,21 @@ export default function PublicClinicSite() {
 
   const ctaButtons = (
     <div className="flex flex-col sm:flex-row items-center gap-3">
-      <Button size="lg" className="font-semibold px-8 shadow-lg text-base text-white" style={{ backgroundColor: primaryColor, borderRadius: radius }} onClick={scrollToBooking}>
-        <Calendar className="mr-2 h-5 w-5" /> Book Appointment
-      </Button>
+      {s.hero_cta_type === "whatsapp" && s.whatsapp_number ? (
+        <Button size="lg" className="font-semibold px-8 shadow-lg text-base text-white bg-green-500 hover:bg-green-600" style={{ borderRadius: radius }} asChild>
+          <a href={`https://wa.me/${s.whatsapp_number}`} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="mr-2 h-5 w-5" /> {s.hero_cta_label || "Chat on WhatsApp"}
+          </a>
+        </Button>
+      ) : s.hero_cta_type === "call" && clinic?.phone ? (
+        <Button size="lg" className="font-semibold px-8 shadow-lg text-base text-white" style={{ backgroundColor: primaryColor, borderRadius: radius }} asChild>
+          <a href={`tel:${clinic.phone}`}><Phone className="mr-2 h-5 w-5" /> {s.hero_cta_label || "Call Now"}</a>
+        </Button>
+      ) : (
+        <Button size="lg" className="font-semibold px-8 shadow-lg text-base text-white" style={{ backgroundColor: primaryColor, borderRadius: radius }} onClick={scrollToBooking}>
+          <Calendar className="mr-2 h-5 w-5" /> {s.hero_cta_label || "Book Appointment"}
+        </Button>
+      )}
       {clinic?.phone && (
         <Button size="lg" variant="outline" className="px-8 text-base" style={{ borderColor: c.border, color: c.text, backgroundColor: "transparent", borderRadius: radius }} asChild>
           <a href={`tel:${clinic.phone}`}><Phone className="mr-2 h-5 w-5" /> Call Us</a>
