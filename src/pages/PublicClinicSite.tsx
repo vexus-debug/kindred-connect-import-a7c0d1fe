@@ -616,16 +616,272 @@ export default function PublicClinicSite() {
     </FadeInSection>
   ) : null;
 
-  const sectionMap: Record<SectionKey, React.ReactNode> = {
-    booking: bookingSection,
-    services: servicesSection,
-    gallery: gallerySection,
-    doctors: doctorsSection,
-    reviews: reviewsSection,
-    hours: hoursSection,
-    contact: contactSection,
-    certs: certsSection,
-  };
+  /* ── Trust bar ── */
+  const trustItems = [
+    s.trust_years ? { label: "Years in practice", value: s.trust_years } : null,
+    s.trust_patients ? { label: "Patients treated", value: s.trust_patients } : null,
+    (s.trust_rating || avgRating) ? { label: "Patient rating", value: `${s.trust_rating || avgRating} ★` } : null,
+    s.trust_extra_value ? { label: s.trust_extra_label || "Certified", value: s.trust_extra_value } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
+
+  const trustBarSection = s.show_trust_bar === false || (trustItems.length === 0 && certs.length === 0) ? null : (
+    <FadeInSection key="trustbar" className="mb-20">
+      <div className="p-6 sm:p-8 shadow-sm" style={cardStyle}>
+        {trustItems.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+            {trustItems.map((t) => (
+              <div key={t.label}>
+                <p className="text-2xl sm:text-3xl font-bold" style={{ color: primaryColor, fontFamily: tpl.headingFont }}>{t.value}</p>
+                <p className="text-xs mt-1 uppercase tracking-wider" style={mutedStyle}>{t.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {certs.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-3 mt-6 pt-6" style={{ borderTop: trustItems.length ? `1px solid ${c.border}` : undefined }}>
+            {certs.map((cert, i) => (
+              <span key={i} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full" style={{ border: `1px solid ${c.border}`, color: c.text }}>
+                <Award className="h-3.5 w-3.5" style={{ color: primaryColor }} /> {cert.title}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </FadeInSection>
+  );
+
+  /* ── Services overview (custom cards, falls back to treatments) ── */
+  const serviceCards = s.service_cards || [];
+  const servicesOverviewSection = serviceCards.length > 0 ? (
+    <FadeInSection key="services-overview" className="mb-20">
+      <SectionTitle title={s.services_title || "Our Services"} subtitle={s.services_subtitle || "Comprehensive dental care under one roof"} />
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {serviceCards.map((sc, i) => (
+          <FadeInSection key={`${sc.title}-${i}`} delay={i * 0.05}>
+            <div className="p-5 h-full shadow-sm" style={cardStyle}>
+              <div className="h-10 w-10 flex items-center justify-center mb-3" style={{ backgroundColor: hexToRgba(primaryColor, 0.1), borderRadius: radius }}>
+                <Stethoscope className="h-5 w-5" style={{ color: primaryColor }} />
+              </div>
+              <h3 className="font-semibold" style={headingStyle}>{sc.title}</h3>
+              {sc.description && <p className="text-sm mt-1" style={mutedStyle}>{sc.description}</p>}
+            </div>
+          </FadeInSection>
+        ))}
+      </div>
+    </FadeInSection>
+  ) : servicesSection;
+
+  /* ── Why choose us ── */
+  const whyItems = s.why_items || [];
+  const whySection = whyItems.length > 0 ? (
+    <FadeInSection key="why" className="mb-20">
+      <SectionTitle title={s.why_title || "Why Choose Us"} />
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {whyItems.map((w, i) => (
+          <FadeInSection key={`${w.title}-${i}`} delay={i * 0.06}>
+            <div className="p-5 h-full shadow-sm" style={cardStyle}>
+              <CheckCircle className="h-6 w-6 mb-3" style={{ color: primaryColor }} />
+              <h3 className="font-semibold" style={headingStyle}>{w.title}</h3>
+              {w.description && <p className="text-sm mt-1" style={mutedStyle}>{w.description}</p>}
+            </div>
+          </FadeInSection>
+        ))}
+      </div>
+    </FadeInSection>
+  ) : null;
+
+  /* ── Meet the dentist ── */
+  const dentistSection = s.dentist_name ? (
+    <FadeInSection key="dentist" className="mb-20">
+      <SectionTitle title="Meet the Dentist" />
+      <div className="grid lg:grid-cols-5 gap-8 items-center p-6 sm:p-8 shadow-sm" style={cardStyle}>
+        <div className="lg:col-span-2">
+          <div
+            className="w-full overflow-hidden"
+            style={{ borderRadius: radius, minHeight: 260, backgroundColor: hexToRgba(primaryColor, 0.1), backgroundImage: s.dentist_photo_url ? `url(${s.dentist_photo_url})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+          />
+        </div>
+        <div className="lg:col-span-3">
+          <h3 className="text-2xl font-bold" style={headingStyle}>{s.dentist_name}</h3>
+          {s.dentist_credentials && <p className="text-sm mt-1 font-medium" style={{ color: primaryColor }}>{s.dentist_credentials}</p>}
+          {s.dentist_bio && <p className="text-sm mt-4 whitespace-pre-line leading-relaxed" style={mutedStyle}>{s.dentist_bio}</p>}
+          <div className="mt-6">{ctaButtons}</div>
+        </div>
+      </div>
+    </FadeInSection>
+  ) : null;
+
+  /* ── Testimonials (manual first, else patient reviews) ── */
+  const manualTestimonials = s.testimonials || [];
+  const testimonialsSection = manualTestimonials.length > 0 ? (
+    <FadeInSection key="testimonials" className="mb-20">
+      <SectionTitle title="What Patients Say" />
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {manualTestimonials.map((t, i) => (
+          <FadeInSection key={`${t.name}-${i}`} delay={i * 0.06}>
+            <div className="p-5 h-full shadow-sm" style={cardStyle}>
+              <div className="flex gap-0.5 mb-2">
+                {Array.from({ length: 5 }).map((_, k) => (
+                  <Star key={k} className={`h-4 w-4 ${k < (t.rating || 5) ? "fill-yellow-400 text-yellow-400" : ""}`} style={k < (t.rating || 5) ? undefined : { color: c.border }} />
+                ))}
+              </div>
+              <p className="text-sm" style={{ color: c.text }}>“{t.text}”</p>
+              <div className="flex items-center gap-2 mt-3">
+                {t.photo_url ? (
+                  <img src={t.photo_url} alt={t.name} className="h-8 w-8 rounded-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: primaryColor }}>
+                    {t.name?.[0] || "P"}
+                  </div>
+                )}
+                <span className="text-xs font-medium" style={mutedStyle}>{t.name}</span>
+              </div>
+            </div>
+          </FadeInSection>
+        ))}
+      </div>
+    </FadeInSection>
+  ) : reviewsSection;
+
+  /* ── Pricing / what to expect ── */
+  const pricingItems = s.pricing_items || [];
+  const pricingSection = (pricingItems.length > 0 || s.what_to_expect) ? (
+    <FadeInSection key="pricing" className="mb-20">
+      <SectionTitle title={s.pricing_title || "Pricing & What to Expect"} subtitle={s.pricing_note} />
+      <div className="grid lg:grid-cols-2 gap-6">
+        {pricingItems.length > 0 && (
+          <div className="overflow-hidden shadow-sm" style={cardStyle}>
+            {pricingItems.map((p, i) => (
+              <div key={`${p.name}-${i}`} className="flex items-center justify-between px-5 py-4" style={{ borderBottom: i < pricingItems.length - 1 ? `1px solid ${c.border}` : undefined }}>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: c.text }}>{p.name}</p>
+                  {p.note && <p className="text-xs mt-0.5" style={mutedStyle}>{p.note}</p>}
+                </div>
+                <span className="text-sm font-bold" style={{ color: primaryColor }}>{p.price}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {s.what_to_expect && (
+          <div className="p-6 shadow-sm" style={cardStyle}>
+            <h3 className="font-semibold mb-2" style={headingStyle}>What to Expect</h3>
+            <p className="text-sm whitespace-pre-line leading-relaxed" style={mutedStyle}>{s.what_to_expect}</p>
+          </div>
+        )}
+      </div>
+    </FadeInSection>
+  ) : null;
+
+  /* ── FAQ ── */
+  const faqs = s.faqs || [];
+  const faqSection = faqs.length > 0 ? (
+    <FadeInSection key="faq" className="mb-20">
+      <SectionTitle title="Frequently Asked Questions" />
+      <div className="max-w-3xl mx-auto space-y-3">
+        {faqs.map((f, i) => (
+          <details key={`${f.question}-${i}`} className="p-5 shadow-sm" style={cardStyle}>
+            <summary className="cursor-pointer font-medium text-sm list-none flex items-center justify-between gap-4" style={{ color: c.text }}>
+              {f.question}
+              <ChevronDown className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+            </summary>
+            <p className="text-sm mt-3 whitespace-pre-line leading-relaxed" style={mutedStyle}>{f.answer}</p>
+          </details>
+        ))}
+      </div>
+    </FadeInSection>
+  ) : null;
+
+  /* ── Location & hours ── */
+  const locationSection = (
+    <FadeInSection key="location" className="mb-20">
+      <SectionTitle title="Location & Hours" subtitle="Find us and plan your visit" />
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="overflow-hidden shadow-sm" style={cardStyle}>
+          {s.map_embed_url ? (
+            <iframe
+              src={s.map_embed_url}
+              title="Clinic location map"
+              className="w-full"
+              style={{ height: 320, border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-8" style={{ height: 320 }}>
+              <MapPin className="h-7 w-7 mb-3" style={{ color: primaryColor }} />
+              <p className="text-sm" style={{ color: c.text }}>{clinic?.address || "Address coming soon"}</p>
+            </div>
+          )}
+        </div>
+        <div className="overflow-hidden shadow-sm" style={cardStyle}>
+          {clinic?.address && (
+            <div className="px-5 py-4" style={{ borderBottom: `1px solid ${c.border}` }}>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={mutedStyle}>Address</p>
+              <p className="text-sm mt-1" style={{ color: c.text }}>{clinic.address}</p>
+              {s.directions_url && (
+                <a href={s.directions_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium mt-1 inline-block hover:underline" style={{ color: primaryColor }}>
+                  Get directions
+                </a>
+              )}
+            </div>
+          )}
+          {hours.map((h, i) => {
+            const isToday = new Date().toLocaleDateString("en-US", { weekday: "long" }) === h.day;
+            return (
+              <div key={h.day} className="flex items-center justify-between px-5 py-3" style={{ borderBottom: i < hours.length - 1 ? `1px solid ${c.border}` : undefined, backgroundColor: isToday ? hexToRgba(primaryColor, 0.05) : undefined }}>
+                <span className="text-sm" style={{ color: isToday ? c.text : c.muted, fontWeight: isToday ? 700 : 400 }}>{h.day}</span>
+                <span className="text-sm" style={{ color: h.closed ? c.muted : c.text, fontWeight: h.closed ? 400 : 600 }}>
+                  {h.closed ? "Closed" : `${h.open} – ${h.close}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </FadeInSection>
+  );
+
+  /* ── Final CTA ── */
+  const finalCtaSection = (
+    <FadeInSection key="final-cta" className="mb-20">
+      <div className="p-8 sm:p-12 text-center shadow-sm" style={{ ...cardStyle, background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.12)}, ${hexToRgba(accentColor, 0.14)})` }}>
+        <h2 className="text-2xl sm:text-3xl font-bold" style={headingStyle}>
+          {s.final_cta_title || "Ready to book your visit?"}
+        </h2>
+        <p className="mt-2 text-sm sm:text-base max-w-xl mx-auto" style={mutedStyle}>
+          {s.final_cta_subtitle || "Reserve your appointment in under a minute — or message us on WhatsApp."}
+        </p>
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button size="lg" className="font-semibold px-8 text-white" style={{ backgroundColor: primaryColor, borderRadius: radius }} onClick={scrollToBooking}>
+            <Calendar className="mr-2 h-5 w-5" /> {s.final_cta_label || "Book Appointment"}
+          </Button>
+          {s.whatsapp_number && (
+            <Button size="lg" className="font-semibold px-8 bg-green-500 hover:bg-green-600 text-white" style={{ borderRadius: radius }} asChild>
+              <a href={`https://wa.me/${s.whatsapp_number}`} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-5 w-5" /> WhatsApp Us
+              </a>
+            </Button>
+          )}
+        </div>
+      </div>
+    </FadeInSection>
+  );
+
+  const orderedSections: React.ReactNode[] = [
+    trustBarSection,
+    servicesOverviewSection,
+    whySection,
+    gallerySection,
+    dentistSection,
+    doctorsSection,
+    testimonialsSection,
+    pricingSection,
+    bookingSection,
+    faqSection,
+    locationSection,
+    contactSection,
+    finalCtaSection,
+  ];
 
   return (
     <div className="min-h-screen" style={dynamicStyles}>
