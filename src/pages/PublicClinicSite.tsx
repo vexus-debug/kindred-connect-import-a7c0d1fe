@@ -934,13 +934,23 @@ export default function PublicClinicSite() {
       {/* ── Footer ── */}
       <footer style={{ borderTop: `1px solid ${c.border}`, backgroundColor: tpl.dark ? c.surface : hexToRgba(primaryColor, 0.04) }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 {clinic?.logo_url && <img src={clinic.logo_url} alt="" className="h-8 w-8 rounded-full object-cover" />}
                 <span className="font-bold" style={headingStyle}>{clinic?.name}</span>
               </div>
               {s.short_description && <p className="text-sm" style={mutedStyle}>{s.short_description}</p>}
+              {s.footer_note && <p className="text-xs mt-2" style={mutedStyle}>{s.footer_note}</p>}
+            </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={mutedStyle}>Quick Links</h4>
+              <button onClick={scrollToBooking} className="text-sm block mb-1 hover:underline" style={{ color: c.text }}>Book Appointment</button>
+              <Link to={`/site/${slug}/shop`} className="text-sm block mb-1 hover:underline" style={{ color: c.text }}>Shop</Link>
+              {clinic?.phone && <a href={`tel:${clinic.phone}`} className="text-sm block mb-1 hover:underline" style={{ color: c.text }}>Call Us</a>}
+              {s.whatsapp_number && (
+                <a href={`https://wa.me/${s.whatsapp_number}`} target="_blank" rel="noopener noreferrer" className="text-sm block hover:underline" style={{ color: c.text }}>WhatsApp</a>
+              )}
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={mutedStyle}>Contact</h4>
